@@ -17,6 +17,7 @@ import com.example.contatos.domain.Contato;
 import com.example.contatos.domain.ContatosRepo;
 
 @RestController
+@CrossOrigin
 @RequestMapping("/contatos")
 public class ContatoRest {
 
