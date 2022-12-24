@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <!-- CSS only -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
+  
+  <!-- JavaScript Bundle with Popper -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4" crossorigin="anonymous"></script>
+  
+  <!-- Option 1: Include in HTML -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.3.0/font/bootstrap-icons.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  
+</head>
+<body>
+  <h1>Contatos</h1>
+  <form id="form-buscar" method="" action="">
+    <h4>Busca</h4>
+	<label>Nome:</label>
+	<input type="text" id="input-buscar">
+	<input type="button" id="btn-buscar" value="Buscar">
+  </form>
+  <table id="tabela-contatos"></table>
+  <button id="btn-novo">Novo</button>
+  <form id="form-contato" style="display: none;" method="" action="">
+    <h4 id="form-titulo">Novo Contato</h4>
+	<label>Nome: </label><input type="text" name="nome" id="input-nome"><br>
+	<label>Fone: </label><input type="text" name="telefone" id="input-telefone"><br>
+	<label>E-mail: </label><input type="text" name="email" id="input-email"><br>
+	<input type="button" id="btn-salvar" value="Salvar">
+	<input type="button" id="btn-cancelar" value="Cancelar">
+  </form>
+  
+  
+  
+  <script>
+	let editando = false;
+	let idContatoEditando = 0;
+	const apiUrl = 'https://dxigxrfvniesymwkjsup.supabase.co/rest/v1/Contato';
+	const apiKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR4aWd4cmZ2bmllc3ltd2tqc3VwIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTY3MTg0NzAzNiwiZXhwIjoxOTg3NDIzMDM2fQ.Qz29QgRCvwXuHAcOuJ3ZloQk4fzNj4etAoJBGjcScO8';
+	const apiAuthorization = 'Bearer ' + apiKey;
+	
+	let consultarContatos = (url) => {
+	    $.ajax({
+			type: 'get',
+			url: url || (apiUrl + '?select=*'),
+			dataType: 'json',
+			contentType: 'application/json; charset=utf-8',
+			crossDomain: true,
+			headers: {
+				'apikey': apiKey,
+				'Authorization': apiAuthorization
+			},
+			success: (contatos) => {
+				let contatosStr = '<tr><th>Id</th><th>Nome</th><th>Telefone</th><th>E-mail</th><th></th><th></th></tr>';
+				for (contato of contatos) {
+				    contatosStr +=
+							'<tr>' +
+								'<td>' + contato.id + '</td>' +
+								'<td>' + contato.nome + '</td>' +
+								'<td>' + contato.telefone + '</td>' +
+								'<td>' + contato.email + '</td>' +
+								'<td><i class="bi bi-pencil-fill" onclick="editarContato(' + contato.id + ',\'' + contato.nome + '\',\'' + contato.telefone + '\',\'' + contato.email + '\');"></i></td>' + 
+								'<td><i class="bi bi-trash-fill" onclick="apagarContato(' + contato.id + ');"></i></td>' + 
+							'</tr>';
+				}
+				$('#tabela-contatos').html(contatosStr);
+			},
+			error: (erro) => {
+				window.alert("Ocorreu um erro: " + JSON.stringify(erro));
+			}
+		});
+	};
+	
+	let apagarContato = (id) => {
+		$.ajax({
+			type: 'delete',
+			url: apiUrl + '?id=eq.' + id,
+			crossDomain: true,
+			headers: {
+				'apikey': apiKey,
+				'Authorization': apiAuthorization
+			},
+			success: () => {
+				consultarContatos();
+			},
+			error: (erro) => {
+				window.alert("Ocorreu um erro: " + JSON.stringify(erro));
+			}
+		});
+	};
+	
+	let editarContato = (id, nome, telefone, email) => {
+		editando = true;
+		idContatoEditando = id;
+		$('#form-titulo').html('Editar Contato');
+		$('#form-contato').css('display', 'block');
+		$('#input-nome').val(nome);
+		$('#input-telefone').val(telefone);
+		$('#input-email').val(email);
+	};
+	
+	$('#btn-novo').click(() => {
+		editando = false;
+		idContatoEditando = 0;
+		$('#form-titulo').html('Novo Contato');
+		$('#form-contato').css('display', 'block');
+		$('#input-nome').val('');
+		$('#input-telefone').val('');
+		$('#input-email').val('');
+	});
+	
+	$('#btn-cancelar').click(() => {
+		$('#form-contato').css('display', 'none');
+	});
+	
+	$(document).ready(() => { consultarContatos(); });
+	
+	$('#btn-salvar').click(() => {
+		let dados = {
+			nome: $('#input-nome').val(),
+			telefone: $('#input-telefone').val(),
+			email: $('#input-email').val()
+		};
+		
+		let type, url;
+		
+		if (editando) {
+			type = 'patch';
+			url = apiUrl + '?id=eq.' + idContatoEditando;
+		} else {
+			type = 'post';
+			url = apiUrl;
+		}
+	
+		$.ajax({
+			type: type,
+			url: url,
+			data: JSON.stringify(dados),
+			contentType: 'application/json; charset=utf-8',
+			crossDomain: true,
+			headers: {
+				'apikey': apiKey,
+				'Authorization': apiAuthorization
+			},
+			success: (contato) => {
+				consultarContatos();
+				$('#form-contato').css('display', 'none');
+			},
+			error: (erro) => {
+				window.alert("Ocorreu um erro: " + erro.message);
+			}
+		});
+	});
+	
+	$('#btn-buscar').click(() => {
+		if ($('#input-buscar').val() == "") {
+			consultarContatos();
+		} else {
+			consultarContatos(apiUrl + '?nome=ilike.%25' + $('#input-buscar').val() + '%25');
+		}
+	});
+  </script>
+</body>
+</html>
