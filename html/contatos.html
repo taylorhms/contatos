@@ -39,7 +39,7 @@
 	let editando = false;
 	let idContatoEditando = 0;
 	
-	let atualizarContatos = (url) => {
+	let consultarContatos = (url) => {
 	    $.ajax({
 			type: 'get',
 			url: url || 'http://localhost:8080/contatos',
@@ -73,7 +73,7 @@
 			url: 'http://localhost:8080/contatos/' + id,
 			crossDomain: true,
 			success: () => {
-				atualizarContatos();
+				consultarContatos();
 			},
 			error: (erro) => {
 				window.alert("Ocorreu um erro: " + JSON.stringify(erro));
@@ -105,7 +105,7 @@
 		$('#form-contato').css('display', 'none');
 	});
 	
-	$(document).ready(() => { atualizarContatos(); });
+	$(document).ready(() => { consultarContatos(); });
 	
 	$('#btn-salvar').click(() => {
 		let dados = {
@@ -114,16 +114,26 @@
 			telefone: $('#input-telefone').val(),
 			email: $('#input-email').val()
 		};
+		
+		let type, url;
+	
+		if (editando) {
+			type = 'put';
+			url = 'http://localhost:8080/contatos/' + idContatoEditando;
+		} else {
+			type = 'post';
+			url = 'http://localhost:8080/contatos';
+		}
 	
 		$.ajax({
-			type: 'post',
-			url: 'http://localhost:8080/contatos',
+			type: type,
+			url: url,
 			dataType: 'json',
 			contentType: 'application/json; charset=utf-8',
 			data: JSON.stringify(dados),
 			crossDomain: true,
 			success: (contato) => {
-				atualizarContatos();
+				consultarContatos();
 				$('#form-contato').css('display', 'none');
 			},
 			error: (erro) => {
@@ -134,9 +144,9 @@
 	
 	$('#btn-buscar').click(() => {
 		if ($('#input-buscar').val() == "") {
-			atualizarContatos();
+			consultarContatos();
 		} else {
-			atualizarContatos('http://localhost:8080/contatos/buscar/' + $('#input-buscar').val());
+			consultarContatos('http://localhost:8080/contatos/buscar/' + $('#input-buscar').val());
 		}
 	});
   </script>
